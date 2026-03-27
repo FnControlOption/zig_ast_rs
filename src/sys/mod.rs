@@ -54,6 +54,8 @@ ast! {
     block_statements / zig_ast_block_statements(tree: *const Ast, buffer: *mut [NodeIndex; 2], index: NodeIndex, count: *mut usize) -> *const NodeIndex;
 
     builtin_fn_tag / zig_ast_builtin_fn_tag(name: *const u8, len: usize, tag: *mut BuiltinFnTag) -> bool;
+    parse_string_literal / zig_ast_parse_string_literal(ptr: *const u8, len: *mut usize) -> *mut u8;
+    free_string / zig_ast_free_string(ptr: *mut u8, len: usize);
 }
 
 pub trait Full<'ast, const N: usize>: Sized {

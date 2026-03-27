@@ -370,3 +370,15 @@ export fn zig_ast_builtin_fn_tag(name: [*]const u8, len: usize, tag: *ExternEnum
     }
     return false;
 }
+
+export fn zig_ast_parse_string_literal(ptr: [*]const u8, len: *usize) ?[*]u8 {
+    const slice = std.zig.string_literal.parseAlloc(allocator, ptr[0..len.*]) catch |err| switch (err) {
+        error.OutOfMemory, error.InvalidLiteral => return null,
+    };
+    len.* = slice.len;
+    return slice.ptr;
+}
+
+export fn zig_ast_free_string(ptr: [*]const u8, len: usize) void {
+    allocator.free(ptr[0..len]);
+}

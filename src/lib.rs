@@ -215,6 +215,10 @@ impl Ast {
             })
         }
     }
+
+    pub fn parse_string_literal(&self, index: NodeIndex) -> Option<OwnedString> {
+        parse_string_literal(self.token_slice(self.node_main_token(index)))
+    }
 }
 
 pub struct BufferedData<'ast, const N: usize, T: Sized> {
@@ -265,5 +269,54 @@ pub fn builtin_fn_tag(name: &[u8]) -> Option<BuiltinFnTag> {
         } else {
             None
         }
+    }
+}
+
+pub fn parse_string_literal(bytes: &[u8]) -> Option<OwnedString> {
+    match bytes {
+        [b'"', .., b'"'] => {}
+        _ => return None,
+    }
+    let mut len = bytes.len();
+    unsafe {
+        let ptr = sys::Ast::parse_string_literal(bytes.as_ptr(), &mut len);
+        if ptr.is_null() {
+            None
+        } else {
+            Some(OwnedString { ptr, len })
+        }
+    }
+}
+
+pub struct OwnedString {
+    ptr: *mut u8,
+    len: usize,
+}
+
+impl OwnedString {
+    pub fn as_bytes(&self) -> &[u8] {
+        unsafe { std::slice::from_raw_parts(self.ptr, self.len) }
+    }
+
+    pub fn as_bytes_mut(&self) -> &mut [u8] {
+        unsafe { std::slice::from_raw_parts_mut(self.ptr, self.len) }
+    }
+}
+
+impl AsRef<[u8]> for OwnedString {
+    fn as_ref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+impl AsMut<[u8]> for OwnedString {
+    fn as_mut(&mut self) -> &mut [u8] {
+        self.as_bytes_mut()
+    }
+}
+
+impl Drop for OwnedString {
+    fn drop(&mut self) {
+        unsafe { sys::Ast::free_string(self.ptr, self.len) };
     }
 }

@@ -64,4 +64,17 @@ fn test() {
             _ => {}
         }
     }
+    println!();
+    let mut visitor = Visitor;
+    visitor.visit(&tree, NodeIndex::ROOT);
+    println!();
+}
+
+struct Visitor;
+
+impl Visit for Visitor {
+    fn visit(&mut self, tree: &Ast, index: NodeIndex) {
+        println!("visit: {:?}", tree.node_tag(index));
+        visit(self, tree, index);
+    }
 }

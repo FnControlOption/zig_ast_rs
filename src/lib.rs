@@ -7,6 +7,9 @@ pub use sys::extra_data::*;
 pub use sys::node_data::*;
 pub use sys::*;
 
+mod visit;
+pub use visit::*;
+
 pub struct Ast {
     source: CString,
     tree: *mut sys::Ast,

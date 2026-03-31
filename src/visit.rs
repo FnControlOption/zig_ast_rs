@@ -148,7 +148,7 @@ where
             visitor.visit(tree, full_while.ast.then_expr);
             visitor.visit_optional(tree, full_while.ast.else_expr);
         }
-        NodeTag::ForSimple | NodeTag::For | NodeTag::ForRange => {
+        NodeTag::ForSimple | NodeTag::For => {
             let full_for: full::For = tree.full_node(index).unwrap();
             visitor.visit_slice(tree, full_for.ast.inputs());
             visitor.visit(tree, full_for.ast.then_expr);
@@ -292,6 +292,11 @@ where
             let NodeAndNode(lhs, rhs) = unsafe { tree.node_data_unchecked(index) };
             visitor.visit(tree, lhs);
             visitor.visit(tree, rhs);
+        }
+        NodeTag::ForRange => {
+            let NodeAndOptNode(lhs, rhs) = unsafe { tree.node_data_unchecked(index) };
+            visitor.visit(tree, lhs);
+            visitor.visit_optional(tree, rhs);
         }
         NodeTag::AsmLegacy => {
             let NodeAndExtra(lhs, _) = unsafe { tree.node_data_unchecked(index) };

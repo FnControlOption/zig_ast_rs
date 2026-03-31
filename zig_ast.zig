@@ -111,6 +111,23 @@ export fn zig_ast_token_slice(tree: *const Ast, index: TokenIndex, len: *usize) 
     return slice.ptr;
 }
 
+// Based on std.zig.Ast.tokenSlice
+export fn zig_ast_token_length(tree: *const Ast, index: TokenIndex) ByteOffset {
+    const token_tag = tree.tokenTag(index);
+
+    if (token_tag.lexeme()) |lexeme| {
+        return @intCast(lexeme.len);
+    }
+
+    var tokenizer: std.zig.Tokenizer = .{
+        .buffer = tree.source,
+        .index = tree.tokenStart(index),
+    };
+    const token = tokenizer.next();
+    assert(token.tag == token_tag);
+    return @intCast(token.loc.end - token.loc.start);
+}
+
 export fn zig_ast_extra_data(tree: *const Ast) [*]const u32 {
     return tree.extra_data.ptr;
 }

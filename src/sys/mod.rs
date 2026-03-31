@@ -49,6 +49,7 @@ ast! {
     first_token / zig_ast_first_token(tree: *const Ast, index: NodeIndex) -> TokenIndex;
     last_token / zig_ast_last_token(tree: *const Ast, index: NodeIndex) -> TokenIndex;
     token_slice / zig_ast_token_slice(tree: *const Ast, index: TokenIndex, len: *mut usize) -> *const u8;
+    token_length / zig_ast_token_length(tree: *const Ast, index: TokenIndex) -> u32;
     extra_data / zig_ast_extra_data(tree: *const Ast) -> *const u32;
     extra_data_len / zig_ast_extra_data_len(tree: *const Ast) -> u32;
     builtin_call_params / zig_ast_builtin_call_params(tree: *const Ast, buffer: *mut [NodeIndex; 2], index: NodeIndex, count: *mut usize) -> *const NodeIndex;
@@ -85,73 +86,80 @@ unsafe extern "C" {
     ) -> full::AssignDestructure<'ast>;
 }
 
+unsafe fn slice_from_raw_parts<'a>(ptr: *const NodeIndex, len: usize) -> &'a [NodeIndex] {
+    match len {
+        0 => &[],
+        _ => unsafe { std::slice::from_raw_parts(ptr, len) },
+    }
+}
+
 impl<'ast> full::AssignDestructureComponents<'ast> {
     pub fn variables(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.variables_ptr, self.variables_len) }
+        unsafe { slice_from_raw_parts(self.variables_ptr, self.variables_len) }
     }
 }
 
 impl<'ast> full::ForComponents<'ast> {
     pub fn inputs(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.inputs_ptr, self.inputs_len) }
+        unsafe { slice_from_raw_parts(self.inputs_ptr, self.inputs_len) }
     }
 }
 
 impl<'ast> full::FnProtoComponents<'ast> {
     pub fn params(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.params_ptr, self.params_len) }
+        unsafe { slice_from_raw_parts(self.params_ptr, self.params_len) }
     }
 }
 
 impl<'ast> full::StructInitComponents<'ast> {
     pub fn fields(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.fields_ptr, self.fields_len) }
+        unsafe { slice_from_raw_parts(self.fields_ptr, self.fields_len) }
     }
 }
 
 impl<'ast> full::ArrayInitComponents<'ast> {
     pub fn elements(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.elements_ptr, self.elements_len) }
+        unsafe { slice_from_raw_parts(self.elements_ptr, self.elements_len) }
     }
 }
 
 impl<'ast> full::ContainerDeclComponents<'ast> {
     pub fn members(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.members_ptr, self.members_len) }
+        unsafe { slice_from_raw_parts(self.members_ptr, self.members_len) }
     }
 }
 
 impl<'ast> full::SwitchComponents<'ast> {
     pub fn cases(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.cases_ptr, self.cases_len) }
+        unsafe { slice_from_raw_parts(self.cases_ptr, self.cases_len) }
     }
 }
 
 impl<'ast> full::SwitchCaseComponents<'ast> {
     pub fn values(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.values_ptr, self.values_len) }
+        unsafe { slice_from_raw_parts(self.values_ptr, self.values_len) }
     }
 }
 
 impl<'ast> full::Asm<'ast> {
     pub fn outputs(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.outputs_ptr, self.outputs_len) }
+        unsafe { slice_from_raw_parts(self.outputs_ptr, self.outputs_len) }
     }
 
     pub fn inputs(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.inputs_ptr, self.inputs_len) }
+        unsafe { slice_from_raw_parts(self.inputs_ptr, self.inputs_len) }
     }
 }
 
 impl<'ast> full::AsmComponents<'ast> {
     pub fn items(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.items_ptr, self.items_len) }
+        unsafe { slice_from_raw_parts(self.items_ptr, self.items_len) }
     }
 }
 
 impl<'ast> full::CallComponents<'ast> {
     pub fn params(&'ast self) -> &'ast [NodeIndex] {
-        unsafe { std::slice::from_raw_parts(self.params_ptr, self.params_len) }
+        unsafe { slice_from_raw_parts(self.params_ptr, self.params_len) }
     }
 }
 

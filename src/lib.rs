@@ -126,6 +126,11 @@ impl Ast {
         }
     }
 
+    pub fn token_length(&self, index: TokenIndex) -> u32 {
+        self.check_token_index(index);
+        unsafe { sys::Ast::token_length(self.tree, index) }
+    }
+
     pub fn extra_data_slice<T: From<u32>>(&self, range: SubRange) -> impl Iterator<Item = T> {
         self.check_extra_range(range);
         ExtraDataSlice {

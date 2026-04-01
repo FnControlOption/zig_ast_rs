@@ -117,6 +117,11 @@ impl Ast {
         unsafe { sys::Ast::last_token(self.tree, index) }
     }
 
+    pub fn token_location(&self, index: TokenIndex) -> Location {
+        self.check_token_index(index);
+        unsafe { sys::Ast::token_location(self.tree, index) }
+    }
+
     pub fn token_slice(&self, index: TokenIndex) -> &[u8] {
         self.check_token_index(index);
         let mut len = MaybeUninit::uninit();

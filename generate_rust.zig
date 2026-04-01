@@ -42,6 +42,10 @@ pub fn main() !void {
     try writeEnum(arena, enums_writer, std.builtin.Type.Pointer.Size, null);
     try writeEnum(arena, enums_writer, std.zig.BuiltinFn.Tag, null);
 
+    var lifetimes: std.StringArrayHashMapUnmanaged(void) = .empty;
+    // TODO: either (a) rename output file or (b) move this struct to a different file
+    try writeStruct(arena, enums_writer, Ast.Location, &lifetimes);
+
     var full_file = try std.fs.cwd().createFile(full_path, .{});
     defer full_file.close();
     var full_file_buffer: [4096]u8 = undefined;
@@ -81,6 +85,8 @@ fn toRustType(comptime T: type) struct { []const u8, ?[]const u8 } {
         ExternEnum(Ast.OptionalTokenIndex) => .{ "OptionalTokenIndex", null },
         ExternEnum(Ast.Node.Index) => .{ "NodeIndex", null },
         ExternEnum(Ast.Node.OptionalIndex) => .{ "OptionalNodeIndex", null },
+
+        ExternStruct(Ast.Location) => .{ "Location", null },
 
         ExternStruct(Ast.full.VarDecl) => .{ "VarDecl", null },
         ExternStruct(Ast.full.AssignDestructure) => .{ "AssignDestructure", null },

@@ -48,6 +48,7 @@ ast! {
     node_main_token / zig_ast_node_main_token(tree: *const Ast, index: NodeIndex) -> TokenIndex;
     first_token / zig_ast_first_token(tree: *const Ast, index: NodeIndex) -> TokenIndex;
     last_token / zig_ast_last_token(tree: *const Ast, index: NodeIndex) -> TokenIndex;
+    token_location / zig_ast_token_location(tree: *const Ast, index: TokenIndex) -> Location;
     token_slice / zig_ast_token_slice(tree: *const Ast, index: TokenIndex, len: *mut usize) -> *const u8;
     token_length / zig_ast_token_length(tree: *const Ast, index: TokenIndex) -> u32;
     extra_data / zig_ast_extra_data(tree: *const Ast) -> *const u32;

@@ -105,6 +105,11 @@ export fn zig_ast_last_token(tree: *const Ast, index: NodeIndex) TokenIndex {
     return tree.lastToken(@enumFromInt(index));
 }
 
+export fn zig_ast_token_location(tree: *const Ast, index: TokenIndex) ExternStruct(Ast.Location) {
+    // TODO: accept start offset
+    return toExternStruct(tree.tokenLocation(0, index));
+}
+
 export fn zig_ast_token_slice(tree: *const Ast, index: TokenIndex, len: *usize) [*]const u8 {
     const slice = tree.tokenSlice(index);
     len.* = slice.len;
@@ -269,6 +274,7 @@ pub fn ExternType(comptime T: type) type {
         },
         else => switch (T) {
             bool => bool,
+            usize => usize,
             Ast.TokenIndex => TokenIndex,
             else => comptime unreachable,
         },
@@ -288,6 +294,7 @@ fn toExtern(value: anytype) ExternType(@TypeOf(value)) {
         },
         else => switch (T) {
             bool => value,
+            usize => value,
             Ast.TokenIndex => value,
             else => comptime unreachable,
         },

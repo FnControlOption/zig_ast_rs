@@ -432,3 +432,11 @@ pub enum BuiltinFnTag {
     work_group_size = 119,
     work_group_id = 120,
 }
+
+#[repr(C)]
+pub struct Location {
+    pub line: usize,
+    pub column: usize,
+    pub line_start: usize,
+    pub line_end: usize,
+}

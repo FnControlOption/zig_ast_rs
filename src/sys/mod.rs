@@ -187,6 +187,14 @@ macro_rules! index_newtype {
                 let end = end.0;
                 Self { index, end }
             }
+
+            pub fn peek(&mut self) -> Option<$Index> {
+                if self.index < self.end {
+                    Some($Index(self.index))
+                } else {
+                    None
+                }
+            }
         }
 
         impl Iterator for $Iterator {

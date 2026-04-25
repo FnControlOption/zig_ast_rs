@@ -298,10 +298,6 @@ where
             visitor.visit(tree, lhs);
             visitor.visit_optional(tree, rhs);
         }
-        NodeTag::AsmLegacy => {
-            let NodeAndExtra(lhs, _) = unsafe { tree.node_data_unchecked(index) };
-            visitor.visit(tree, lhs);
-        }
         NodeTag::FieldAccess
         | NodeTag::UnwrapOptional
         | NodeTag::GroupedExpression

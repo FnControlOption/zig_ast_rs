@@ -8,4 +8,4 @@ How it works:
 
 Run `cargo test -- --nocapture` to run test program
 
-Built with Zig 0.15.2 and Rust 1.94.0
+Built with Zig 0.16.0 and Rust 1.95.0

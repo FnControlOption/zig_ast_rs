@@ -11,14 +11,23 @@ fn ExternInt(comptime T: type) type {
         0 => 0,
         else => |bits| std.math.ceilPowerOfTwoAssert(u16, @max(bits, 8)),
     };
-    return @Type(.{ .int = .{ .signedness = signedness, .bits = bits } });
+    return @Int(signedness, bits);
 }
 
 pub fn ExternEnum(comptime T: type) type {
-    var info = @typeInfo(T);
-    info.@"enum".tag_type = ExternInt(info.@"enum".tag_type);
-    info.@"enum".decls = &.{};
-    return @Type(info);
+    const info = @typeInfo(T).@"enum";
+    const TagInt = ExternInt(info.tag_type);
+    const mode: std.builtin.Type.Enum.Mode = switch (info.is_exhaustive) {
+        true => .exhaustive,
+        false => .nonexhaustive,
+    };
+    comptime var field_names: [info.fields.len][]const u8 = undefined;
+    comptime var field_values: [info.fields.len]TagInt = undefined;
+    inline for (info.fields, &field_names, &field_values) |field, *name, *value| {
+        name.* = field.name;
+        value.* = field.value;
+    }
+    return @Enum(TagInt, mode, &field_names, &field_values);
 }
 
 const TokenTag = ExternEnum(Token.Tag);
@@ -214,32 +223,47 @@ comptime {
 }
 
 pub fn ExternStruct(comptime T: type) type {
+    const FieldAttrs = std.builtin.Type.StructField.Attributes;
     const info = @typeInfo(T).@"struct";
-    var new_info = info;
-    new_info.layout = .@"extern";
-    new_info.decls = &.{};
-    new_info.fields = &.{};
-    for (info.fields) |field| {
+    comptime var field_names: []const []const u8 = &.{};
+    comptime var field_types: []const type = &.{};
+    comptime var field_attrs: []const FieldAttrs = &.{};
+    inline for (info.fields) |field| {
+        assert(!field.is_comptime);
+        assert(field.alignment == null);
+        // assert(field.default_value_ptr == null);
         switch (field.type) {
             []const Ast.Node.Index => {
-                var ptr_field = field;
-                ptr_field.name = field.name ++ "_ptr";
-                ptr_field.type = [*]const ExternEnum(Ast.Node.Index);
-
-                var len_field = field;
-                len_field.name = field.name ++ "_len";
-                len_field.type = usize;
-
-                new_info.fields = new_info.fields ++ .{ ptr_field, len_field };
+                field_names = field_names ++ .{
+                    field.name ++ "_ptr",
+                    field.name ++ "_len",
+                };
+                field_types = field_types ++ .{
+                    [*]const ExternEnum(Ast.Node.Index),
+                    usize,
+                };
+                field_attrs = field_attrs ++ .{
+                    FieldAttrs{},
+                    FieldAttrs{},
+                };
             },
             else => {
-                var new_field = field;
-                new_field.type = ExternType(field.type);
-                new_info.fields = new_info.fields ++ .{new_field};
+                field_names = field_names ++ .{field.name};
+                field_types = field_types ++ .{ExternType(field.type)};
+                field_attrs = field_attrs ++ .{FieldAttrs{}};
             },
         }
     }
-    return @Type(.{ .@"struct" = new_info });
+    const field_count = field_names.len;
+    assert(field_count == field_types.len);
+    assert(field_count == field_attrs.len);
+    return @Struct(
+        .@"extern",
+        info.backing_integer,
+        field_names,
+        field_types[0..field_count],
+        field_attrs[0..field_count],
+    );
 }
 
 fn toExternStruct(value: anytype) ExternStruct(@TypeOf(value)) {
@@ -342,7 +366,6 @@ comptime {
     assert(@intFromEnum(Ast.Node.OptionalIndex.none) == std.math.maxInt(OptionalNodeIndex));
     for (std.meta.declarations(Ast.full)) |decl| {
         if (std.mem.eql(u8, decl.name, "AssignDestructure")) continue;
-        if (std.mem.eql(u8, decl.name, "AsmLegacy")) continue;
         exportFull(decl.name);
     }
 }

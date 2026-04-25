@@ -13,20 +13,19 @@ const rust_keywords = std.StaticStringMap(void).initComptime(.{
     .{"mod"},
 });
 
-pub fn main() !void {
-    var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena_state.deinit();
-    const arena = arena_state.allocator();
+pub fn main(init: std.process.Init) !void {
+    const arena = init.arena.allocator();
+    const io = init.io;
+    const args = try init.minimal.args.toSlice(arena);
 
-    const args = try std.process.argsAlloc(arena);
     assert(args.len == 3);
     const enums_path = args[1];
     const full_path = args[2];
 
-    var enums_file = try std.fs.cwd().createFile(enums_path, .{});
-    defer enums_file.close();
+    var enums_file = try std.Io.Dir.cwd().createFile(io, enums_path, .{});
+    defer enums_file.close(io);
     var enums_file_buffer: [4096]u8 = undefined;
-    var enums_file_writer = enums_file.writer(&enums_file_buffer);
+    var enums_file_writer = enums_file.writer(io, &enums_file_buffer);
     const enums_writer = &enums_file_writer.interface;
     defer enums_writer.flush() catch @panic("flush failed");
 
@@ -46,10 +45,10 @@ pub fn main() !void {
     // TODO: either (a) rename output file or (b) move this struct to a different file
     try writeStruct(arena, enums_writer, Ast.Location, &lifetimes);
 
-    var full_file = try std.fs.cwd().createFile(full_path, .{});
-    defer full_file.close();
+    var full_file = try std.Io.Dir.cwd().createFile(io, full_path, .{});
+    defer full_file.close(io);
     var full_file_buffer: [4096]u8 = undefined;
-    var full_file_writer = full_file.writer(&full_file_buffer);
+    var full_file_writer = full_file.writer(io, &full_file_buffer);
     const full_writer = &full_file_writer.interface;
     defer full_writer.flush() catch @panic("flush failed");
 
@@ -130,10 +129,9 @@ fn toRustType(comptime T: type) struct { []const u8, ?[]const u8 } {
 
 fn writeFull(
     arena: std.mem.Allocator,
-    writer: *std.io.Writer,
+    writer: *std.Io.Writer,
     comptime name: []const u8,
 ) !void {
-    if (comptime std.mem.eql(u8, name, "AsmLegacy")) return;
     const T = @field(Ast.full, name);
     var lifetimes: std.StringArrayHashMapUnmanaged(void) = .empty;
     try writeStruct(arena, writer, T, &lifetimes);
@@ -147,7 +145,7 @@ fn writeFull(
 
 fn writeFullImpl(
     arena: std.mem.Allocator,
-    writer: *std.io.Writer,
+    writer: *std.Io.Writer,
     comptime name: []const u8,
     lifetimes: []const []const u8,
 ) !void {
@@ -258,7 +256,7 @@ fn lifetimesToStr(arena: std.mem.Allocator, lifetimes: []const []const u8) ![]co
 
 fn writeStruct(
     arena: std.mem.Allocator,
-    writer: *std.io.Writer,
+    writer: *std.Io.Writer,
     comptime T: type,
     lifetimes: *std.StringArrayHashMapUnmanaged(void),
 ) !void {
@@ -313,7 +311,7 @@ fn toRustInt(arena: std.mem.Allocator, comptime T: type) ![]const u8 {
 
 fn writeEnum(
     arena: std.mem.Allocator,
-    writer: *std.io.Writer,
+    writer: *std.Io.Writer,
     comptime T: type,
     doc_comment: ?[]const u8,
 ) !void {
